@@ -1,0 +1,53 @@
+"use strict";
+
+const fs = require('fs');
+let promise = require('bluebird');
+let appMain = require('../../app');
+
+exports.baseUploadImageCode = function (code, path) {
+    return new promise(function (resolve, reject) {
+        fs.writeFile(path, code.replace(/^data:image\/\w+;base64,/, ''), {encoding: 'base64'}, function (err) {
+            fs.chmod(path, '0777');
+            return resolve({error: false, messages: ['Upload success']});
+        });
+    });
+};
+
+exports.baseUploadImageFile = function (file, path) {
+    return new promise(function (resolve, reject) {
+        if (file == null) {
+            return resolve({error: true, messages: ['File not found']});
+        } else {
+            file.mv(path, function (err) {
+                if (err) {
+                    return resolve({error: true, messages: ['File does not upload']});
+                } else {
+                    return resolve({error: false, messages: ['Upload success']});
+                }
+            });
+        }
+    });
+};
+
+exports.checkAndCreateFolder = function (path, hasBasePath) {
+    let incs = path.split("/");
+    let baseBath = hasBasePath ? '' : appMain.BASE_DIR;
+    incs.forEach(function (inc, index) {
+        if (inc.trim() != "") {
+            baseBath = baseBath + '/' + inc.trim();
+            if (!fs.existsSync(baseBath)) {
+                fs.mkdirSync(baseBath, '0777');
+            }
+        }
+    });
+    return baseBath;
+};
+
+
+exports.deleteFile = function (path) {
+    fs.exists(path, function (exists) {
+        if (exists) {
+            fs.unlink(path);
+        }
+    });
+};
